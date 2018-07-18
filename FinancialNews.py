@@ -1,6 +1,3 @@
-# -*- coding: UTF-8 -*-
-
-
 import pickle
 from tqdm import tqdm
 from urllib import request
@@ -29,7 +26,7 @@ def get_this_news(this_link):
     this_html = this_html.decode('utf-8')
     this_soup = BeautifulSoup(this_html)
     # 构造字典
-    dict_info = {'author': '', 'source': '', 'date': '', 'title': '', 'context': ''}
+    dict_info = {'author': '', 'publisher': '', 'date': '', 'resource': '', 'title': '', 'context': ''}
     # 获取标题
     dict_info['title'] = this_soup.find_all('div', 'content_title')[0].get_text()
     # 发布信息
@@ -56,6 +53,9 @@ def get_this_news(this_link):
         context_now = line.get_text().replace(' ', '')
         context += context_now
     dict_info['context'] = context
+
+    # 获取来源
+    dict_info['resource'] = this_link
 
     return dict_info
 
@@ -98,13 +98,13 @@ if __name__ == '__main__':
         pickle.dump(info_all, f)
 
     print('Crawling finished.')
-    
+
     # 测试爬取是否成功，读取并打印某个爬好的文件
     # load_path = 'financialnews_hongguan.pkl'
     # with open(load_path, 'rb') as f:
     #     info_all = pickle.load(f)
     # print(len(info_all))
-    # 
+    #
     # for info_now in info_all:
     #     print(info_now['title'])
     #     print('-'*30)
