@@ -1,3 +1,4 @@
+import re
 import pickle
 from tqdm import tqdm
 from urllib import request
@@ -20,9 +21,7 @@ def assign_url(s):
     except:
         raise KeyError('The key name cannot be found.')
 
-
-this_link = 'http://finance.eastmoney.com/news/1350,20180801917416972.html'
-
+        
 def get_this_news(this_link):
     # input: this_link, link of the current news page
     # output: dict_info, dictionary storing the necessary information about the news
@@ -31,7 +30,7 @@ def get_this_news(this_link):
     this_html = this_html.decode('utf-8')
     this_soup = BeautifulSoup(this_html)
     # fill in the dictionary
-    dict_info = {'web': '', 'publish_date': '', 'publish_time': '', 'resource': '', 'title': '', 'context': ''}
+    dict_info = {'web': '', 'publish_date': '', 'publish_time': '', 'resource': '', 'title': '', 'context': '', 'type': ''}
     main_food = this_soup.find('div', 'newsContent')
     dict_info['web'] = this_link
     dict_info['publish_date'] = main_food.find('div', 'time').get_text().split(' ')[0]
@@ -39,8 +38,9 @@ def get_this_news(this_link):
     dict_info['resource'] = main_food.find('div', 'source data-source').get_text().replace('\r', '').replace('\n', '').replace('来源：', '').strip()
     dict_info['title'] = main_food.h1.get_text().replace(' ', ', ')
     context = main_food.find('div', 'Body').get_text()
-    if len(context) > 0:
+    if len(context) > 0: 
         context = context.replace('\u3000', '').replace('\r', '').replace('\n', '').strip()
+        context = context.replace(re.findall(r'\(责任编辑：DF[0-9]{,3}\)', context)[0], '').strip()
     dict_info['context'] = context
     return dict_info
 
@@ -65,13 +65,14 @@ def get_this_theme(crawl_name, max_page=5):
         theme_soup = BeautifulSoup(html_page)
         theme_soup = theme_soup.find_all('div', 'text')
         for soup_now in theme_soup:
-            link_now = soup_now.find('a').get('href')
+            link_now = soup_now.find('a').get('href')  
             try:
                 info_now = get_this_news(link_now)
+                link_now['type'] = crawl_name
                 info_all.append(info_now)
             except:
-                continue
-    # Saving crawled information
+                continue        
+    # Saving crawled information               
     with open(save_name, 'wb') as f:
         pickle.dump(info_all, f)
     print('Finish to crawl theme: ', crawl_name)
@@ -79,12 +80,11 @@ def get_this_theme(crawl_name, max_page=5):
 
 
 if __name__ == '__main__':
-    lst_theme = ['stock_hk', 'stock_usa', 'forex', 'futures', 'gold',
-                 'news_world', 'news_china', 'remark', 'industry', 'SCI']
     # Crawl
+    lst_theme = ['stock_hk', 'stock_usa', 'forex', 'futures', 'gold', 
+                 'news_world', 'news_china', 'remark', 'industry', 'SCI']
     for now_theme in lst_theme:
-        get_this_theme(crawl_name=now_theme, max_page=20)
-
+        get_this_theme(crawl_name=now_theme, max_page=25)
     print('Crawling finished.')
 
     # Test
